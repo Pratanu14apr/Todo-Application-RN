@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,17 +9,23 @@ import {
   FlatList,
   Pressable,
   SafeAreaView,
+  Alert,
 } from "react-native";
-import React, { useState, useEffect } from "react";
 import { firebase } from "../config";
 import MaterialIcon from "react-native-vector-icons/MaterialCommunityIcons";
 import { useNavigation } from "@react-navigation/native";
 
 const Home = () => {
   const [todos, setTodos] = useState([]);
+  const [height, setHeight] = useState(48);
+
   const todoRef = firebase.firestore().collection("todos");
   const [addData, setAddData] = useState("");
   const navigation = useNavigation();
+
+  const onContentSizeChange = event => {
+    setHeight(event.nativeEvent.contentSize.height);
+  };
 
   useEffect(() => {
     todoRef.orderBy("createdAt", "desc").onSnapshot(querySnapshot => {
@@ -36,16 +43,33 @@ const Home = () => {
     });
   }, []);
 
-  const deleteTodo = todos => {
-    todoRef
-      .doc(todos.id)
-      .delete()
-      .then(() => {
-        alert("Delete Successfully");
-      })
-      .catch(error => {
-        alert(error);
-      });
+  const deleteTodo = todo => {
+    Alert.alert(
+      "Confirmation",
+      "Are you sure you want to delete the todo?",
+      [
+        {
+          text: "No",
+          onPress: () => console.log("Cancel Pressed"),
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: () => {
+            todoRef
+              .doc(todo.id)
+              .delete()
+              .then(() => {
+                alert("Delete Successfully");
+              })
+              .catch(error => {
+                alert(error);
+              });
+          },
+        },
+      ],
+      { cancelable: false }
+    );
   };
 
   const addTodo = () => {
@@ -91,6 +115,7 @@ const Home = () => {
           setTodos(prevTodos =>
             prevTodos.map(item => (item.id === todoId ? updatedTodo : item))
           );
+          alert("Todo is completed");
         })
         .catch(error => {
           console.error("Error marking todo as completed:", error.message);
@@ -102,7 +127,7 @@ const Home = () => {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { height }]}
           placeholder="Add a New Todo"
           placeholderTextColor="#aaaaaa"
           onChangeText={heading => setAddData(heading)}
@@ -110,6 +135,8 @@ const Home = () => {
           underlineColorAndroid="transparent"
           autoCapitalize="none"
           cursorColor="#000"
+          multiline={true}
+          numberOfLines={5}
         />
         <TouchableOpacity style={styles.button} onPress={addTodo}>
           <Text style={styles.buttonText}>Add</Text>
@@ -120,7 +147,7 @@ const Home = () => {
         numColumns={1}
         renderItem={({ item }) => {
           return (
-            <View>
+            <View key={item.id}>
               <Pressable
                 style={[
                   styles.outerContainer,
@@ -128,37 +155,10 @@ const Home = () => {
                 ]}
                 onPress={() => navigation.navigate("Details", { item })}
               >
-                <MaterialIcon
-                  name="trash-can-outline"
-                  color="red"
-                  onPress={() => deleteTodo(item)}
-                  style={styles.todoIcon}
-                />
-
-                <View style={styles.innerContainer}>
-                  <Text
-                    style={[
-                      styles.itemHeading,
-                      item.completed && styles.completedText,
-                    ]}
-                  >
-                    {item.heading[0].toUpperCase() + item.heading.slice(1)}
-                  </Text>
-                </View>
-
-                {/* {!item.completed && (
-                  <TouchableOpacity
-                    onPress={() => markTodoAsCompleted(item.id)}
-                  >
-                    <MaterialIcon
-                      name="check"
-                      color="purple"
-                      size={24}
-                      style={styles.completeIcon}
-                    />
-                  </TouchableOpacity>
-                )} */}
-                <TouchableOpacity onPress={() => markTodoAsCompleted(item.id)}>
+                <TouchableOpacity
+                  onPress={() => markTodoAsCompleted(item.id)}
+                  style={{ flex: 0.15 }}
+                >
                   {item.completed ? (
                     <MaterialIcon
                       name="checkbox-marked"
@@ -175,11 +175,32 @@ const Home = () => {
                     />
                   )}
                 </TouchableOpacity>
+
+                <View style={styles.innerContainer}>
+                  <Text
+                    style={[
+                      styles.itemHeading,
+                      item.completed && styles.completedText,
+                    ]}
+                  >
+                    {item.heading[0].toUpperCase() + item.heading.slice(1)}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => deleteTodo(item)}
+                    style={{ marginLeft: "auto" }}
+                  >
+                    <MaterialIcon
+                      name="trash-can-outline"
+                      color="red"
+                      style={styles.todoIcon}
+                    />
+                  </TouchableOpacity>
+                </View>
               </Pressable>
             </View>
           );
         }}
-        keyExtractor={item => item.id}
+        keyExtractor={(item, index) => index.toString()}
       />
     </SafeAreaView>
   );
@@ -188,39 +209,49 @@ const Home = () => {
 export default Home;
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, paddingHorizontal: 16 },
+  safeArea: {
+    flex: 1,
+    paddingHorizontal: 16,
+    borderTopColor: "#e5e5e5",
+    borderTopWidth: 0.8,
+    backgroundColor: "white",
+  },
   container: {
     flexDirection: "row",
     height: 80,
-    marginTop: 100,
+    marginTop: 20,
   },
   outerContainer: {
     backgroundColor: "#e5e5e5",
-    padding: 16,
-    borderRadius: 15,
-    marginBottom: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginBottom: 16,
     flexDirection: "row",
     alignItems: "center",
   },
   innerContainer: {
     alignItems: "center",
-    flexDirection: "column",
-    marginLeft: 45,
+    flexDirection: "row",
+    flex: 1,
   },
   itemHeading: {
     fontWeight: "bold",
     fontSize: 18,
-    marginRight: 22,
+    flex: 0.9,
   },
   input: {
     height: 48,
     borderRadius: 6,
     overflow: "hidden",
     backgroundColor: "white",
-    paddingLeft: 16,
+    paddingLeft: 10,
     paddingRight: 5,
     flex: 1,
     marginRight: 5,
+    borderColor: "#e5e5e5",
+    borderWidth: 0.8,
+    alignItems: "center",
   },
   button: {
     height: 47,
@@ -234,10 +265,10 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 18,
     fontWeight: "700",
+    textTransform: "uppercase",
   },
   todoIcon: {
     fontSize: 20,
-    marginLeft: 10,
   },
   completeIcon: {
     marginRight: 10,

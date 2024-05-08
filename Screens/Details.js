@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -5,8 +6,9 @@ import {
   StyleSheet,
   Pressable,
   SafeAreaView,
+  Alert,
+  TouchableOpacity,
 } from "react-native";
-import React, { useState } from "react";
 import { firebase } from "../config";
 import { useNavigation } from "@react-navigation/native";
 
@@ -16,7 +18,6 @@ const Details = ({ route }) => {
   const [textHeading, onChangeHeadingText] = useState(
     route.params.item.heading
   );
-
   const navigation = useNavigation();
 
   const updateTodo = () => {
@@ -27,7 +28,12 @@ const Details = ({ route }) => {
           heading: textHeading,
         })
         .then(() => {
-          navigation.navigate("Home");
+          Alert.alert("Success", "Todo has been updated successfully", [
+            {
+              text: "OK",
+              onPress: () => navigation.navigate("Home"),
+            },
+          ]);
         })
         .catch(error => {
           alert(error.message);
@@ -44,15 +50,18 @@ const Details = ({ route }) => {
           value={textHeading}
           placeholder="Update Todo"
           cursorColor="#000"
+          multiline={true}
+          underlineColorAndroid="transparent"
+          autoCapitalize="none"
         />
-        <Pressable
+        <TouchableOpacity
           style={styles.buttonUpdate}
           onPress={() => {
             updateTodo();
           }}
         >
-          <Text>UPDATE TODO</Text>
-        </Pressable>
+          <Text style={{ fontWeight: 600 }}>UPDATE TODO</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -65,12 +74,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   container: {
-    marginTop: 80,
+    marginTop: 20,
     marginLeft: 15,
     marginRight: 15,
   },
   textField: {
-    marginBottom: 10,
     padding: 10,
     fontSize: 15,
     color: "#000000",
@@ -78,7 +86,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   buttonUpdate: {
-    marginTop: 25,
+    marginTop: 20,
     justifyContent: "center",
     alignItems: "center",
     paddingVertical: 12,

@@ -7,7 +7,6 @@ import Details from "./Screens/Details";
 import LoginScreen from "./Screens/LoginScreen";
 import SignupScreen from "./Screens/SignupScreen";
 
-
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -19,8 +18,16 @@ export default function App() {
       >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Signup" component={SignupScreen} />
-        <Stack.Screen name="Home" component={Home} />
-        <Stack.Screen name="Details" component={Details} />
+        <Stack.Screen
+          name="Home"
+          component={Home}
+          options={{ headerShown: true, headerTitle: "Home" }}
+        />
+        <Stack.Screen
+          name="Details"
+          component={Details}
+          options={{ headerShown: true, headerTitle: "Update Todo" }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
